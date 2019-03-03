@@ -1,29 +1,69 @@
 $(function() {
-    /*
-    * Create a list that holds all of your cards
-    */
+    // Data 
     let icons = ['diamond', 'diamond', 'paper-plane-o', 'paper-plane-o', 'anchor', 'anchor', 'bolt', 'bolt', 'cube', 'cube', 'leaf', 'leaf', 'bicycle', 'bicycle', 'bomb', 'bomb'];
     let open = [];
     let cards = $('.deck');
-    /*
-    * Display the cards on the page
-    *   - shuffle the list of cards using the provided "shuffle" method below
-    *   - loop through each card and create its HTML
-    *   - add each card's HTML to the page
+    let moves = 0;
+    let matched = 0;
+    /** 
+    *@description Function to initialize the app and is called after reset/completion.
     */
-    icons = shuffle(icons);
-    for( let i = 0; i < icons.length; i++) {
-        let cardListItem = $('<li></li>');
-        cardListItem.addClass('card');
-        cardListItem.data('card', icons[i])
-        console.log(cardListItem.data('card'))
+    function init() {
+        open = [];
+        moves = 0;
+        matched = 0;
+        cards.empty();
+        icons = shuffle(icons);
+        for( let i = 0; i < icons.length; i++) {
+            let cardListItem = $('<li></li>');
+            cardListItem.addClass('card');
+            cardListItem.data('card', icons[i])
 
-        let cardIcon = $('<i></i>');
-        cardIcon.addClass(`fa fa-${icons[i]}`);
+            let cardIcon = $('<i></i>');
+            cardIcon.addClass(`fa fa-${icons[i]}`);
 
-        cardListItem.append(cardIcon);
-        cards.append(cardListItem);
+            cardListItem.append(cardIcon);
+            cards.append(cardListItem);
+        }
+        let startList = $('.stars');
+        startList.empty();
+        for( let i = 0; i < 3; i++) {
+            let starListItem = $('<li></li>');
+            let starIcon = $('<i></i>');
+            starIcon.addClass('fa fa-star');
+            
+            starListItem.append(starIcon);
+            startList.append(starListItem);
+        }
+        cardClick();
+        showMoves();
     }
+
+    /**
+    *@description Function to attach click listener to cards. Function also checks for match. 
+    */
+    function cardClick() {
+        $('.card').on('click', function() {
+            if(!($(this).hasClass('open show')) && open.length < 2) {
+                toggleVisibility($(this));
+                addToOpen($(this));
+                if(open.length === 2) {
+                    moves++;
+                    showMoves();
+                    if(open[0].data('card') === open[1].data('card')) 
+                        match();
+                    else
+                        notMatch();
+                }
+                
+            }
+        });
+    }
+
+    /**
+    * @description Function to shuffle array items.
+    * @param {array} array The array to be shuffled. 
+    */
     // Shuffle function from http://stackoverflow.com/a/2450976
     function shuffle(array) {
         var currentIndex = array.length, temporaryValue, randomIndex;
@@ -39,52 +79,85 @@ $(function() {
         return array;
     }
 
+    /**
+    *@description Function to toggle the visibility of clicked card. 
+    * @param {*} card The card whose visibility needs to be toggled.
+    */
     function toggleVisibility(card) {
         card.toggleClass('open show');
     }
 
+    /**
+    *@description Function to add opened card to a list. 
+    * @param {*} card The card whose which needs to be added to list.
+    */
     function addToOpen(card) {
         open.push(card)
     }
 
+    /**
+    *@description Function to lock matched cards.
+    */
+    function match() {
+        matched++;
+        open[0].addClass('match');
+        open[1].addClass('match');
+        open = [];
+        if(matched === 8) {
+            gameCompleted();
+        }
+    }
+
+
+    /**
+    *@description Function to hide unmatched cards.
+    */
+    function notMatch() {
+        setTimeout(function() {
+            toggleVisibility(open[0]);
+            toggleVisibility(open[1]);
+            open = [];
+        }, 500);
+    }
+
+
+    /**
+    *@description Function to show number of moves where one move is
+    * two card draw. Based on a preset number of moves, ratings can be decreased.
+    */
+    function showMoves() {
+        $('.moves').text(moves);
+        if(moves === 15 || moves === 25)
+            removeRatings();
+    }
+
+    /**
+    *@description Function to alert completion of game and reset.
+    */
+    function gameCompleted() {
+        alert(`You won the with ${moves} moves`);
+        init();
+    }
+
+
+    /**
+    *@description Function to remove stars for preset moves.
+    */
+    function removeRatings() {
+        let ratings = $('.stars li');
+        ratings.last().remove()
+    }
     /*
     * Testing the functionality of starter
     */
-    
 
-    /*
-    * set up the event listener for a card. If a card is clicked:
-    *  - display the card's symbol (put this functionality in another function that you call from this one)
-    *  - add the card to a *list* of "open" cards (put this functionality in another function that you call from this one)
-    *  - if the list already has another card, check to see if the two cards match
-    *    + if the cards do match, lock the cards in the open position (put this functionality in another function that you call from this one)
-    *    + if the cards do not match, remove the cards from the list and hide the card's symbol (put this functionality in another function that you call from this one)
-    *    + increment the move counter and display it on the page (put this functionality in another function that you call from this one)
-    *    + if all cards have matched, display a message with the final score (put this functionality in another function that you call from this one)
+    init();
+
+    /**
+    *@description Event listener for click of reset button.
     */
-    
-    $('.card').on('click', function() {
-        if(!($(this).hasClass('open show')) && open.length < 2) {
-            toggleVisibility($(this));
-            addToOpen($(this));
-            if(open.length === 2) {
-                if(open[0].data('card') === open[1].data('card')) {
-                    open[0].addClass('match');
-                    open[1].addClass('match');
-                    open = [];
-                }
-                else {
-                    setTimeout(function() {
-                        toggleVisibility(open[0]);
-                        toggleVisibility(open[1]);
-                        open = [];
-                    }, 500);
-                }
-                
-            }
-        }
-        console.log(open)
-    });
-
+    $('.restart').on('click', function() {
+        init();
+    })
     
 });
